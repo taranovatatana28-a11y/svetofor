@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Светофор — напоминалки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --ink:#0F1E1C;
+    --panel:#162A27;
+    --panel-2:#1D332F;
+    --line:rgba(237,231,218,.13);
+    --line-strong:rgba(237,231,218,.28);
+    --cream:#EDE7DA;
+    --muted:#8FA39C;
+    --coral:#FF7A6B;
+    --amber:#E9B44C;
+    --sage:#7FB79A;
+    --r:6px;
+    --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+    --sans:"Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--ink);
+    color:var(--cream);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(90rem 40rem at 78% -12%, rgba(255,122,107,.10), transparent 62%),
+      radial-gradient(70rem 34rem at 6% 108%, rgba(127,183,154,.10), transparent 60%);
+  }
+  .shell{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:34px 24px 90px}
+
+  /* ---------- header ---------- */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .brand h1{font-family:var(--serif);font-weight:400;font-size:40px;line-height:1;margin:0;letter-spacing:.01em}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--coral);display:inline-block;
+    box-shadow:0 0 0 4px rgba(255,122,107,.16)}
+  .brand small{display:block;font-size:12.5px;color:var(--muted);letter-spacing:.06em;margin-top:8px}
+  .today{font-family:var(--serif);font-size:19px;color:var(--cream);text-align:right}
+  .today span{display:block;font-family:var(--sans);font-size:11.5px;color:var(--muted);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+
+  /* ---------- layout ---------- */
+  .cols{display:grid;grid-template-columns:1fr 380px;gap:44px;margin-top:38px;align-items:start}
+  @media (max-width:900px){.cols{grid-template-columns:1fr;gap:34px}}
+
+  /* ---------- composer ---------- */
+  .composer{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:18px 18px 16px}
+  .composer h2{font-family:var(--sans);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 14px;font-weight:500}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  input[type=text],input[type=time],select{
+    font-family:var(--sans);font-size:15px;color:var(--cream);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:var(--r);padding:11px 12px;min-width:0;
+  }
+  input[type=text]{flex:1 1 260px}
+  input[type=time]{width:130px}
+  input::placeholder{color:#6E817B}
+  select{appearance:none;padding-right:28px;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  option{background:#162A27;color:var(--cream)}
+  button{font-family:var(--sans);cursor:pointer;border-radius:var(--r);border:1px solid transparent;
+    transition:background .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease}
+  .btn-add{background:var(--coral);color:#20100C;font-weight:600;padding:11px 20px;font-size:15px}
+  .btn-add:hover{background:#ff8d80}
+  .btn-add:disabled{opacity:.4;cursor:not-allowed}
+  .composer-foot{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .hint{font-size:12.5px;color:var(--muted)}
+  .hint b{color:var(--sage);font-weight:500}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;gap:8px;margin:26px 0 4px;flex-wrap:wrap}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 14px;font-size:13px}
+  .chip:hover{border-color:var(--line-strong);color:var(--cream)}
+  .chip[aria-pressed=true]{background:var(--cream);border-color:var(--cream);color:#12211F;font-weight:500}
+  .count{margin-left:auto;font-size:13px;color:var(--muted);align-self:center}
+
+  /* ---------- list ---------- */
+  ul.list{list-style:none;margin:14px 0 0;padding:0}
+  li.item{display:grid;grid-template-columns:26px 1fr auto;gap:14px;align-items:center;
+    padding:15px 4px;border-bottom:1px solid var(--line)}
+  li.item:first-child{border-top:1px solid var(--line)}
+  .tick{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;
+    display:grid;place-items:center;padding:0;flex:none}
+  .tick:hover{border-color:var(--sage)}
+  .tick svg{opacity:0;transition:opacity .15s ease}
+  li.done .tick{background:var(--sage);border-color:var(--sage)}
+  li.done .tick svg{opacity:1}
+  .body{min-width:0}
+  .txt{font-size:16px;line-height:1.4;word-break:break-word}
+  li.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(143,163,156,.6)}
+  .meta{display:flex;gap:10px;align-items:center;margin-top:4px;font-size:12.5px;color:var(--muted)}
+  .time{font-variant-numeric:tabular-nums;color:var(--cream)}
+  .tag{padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line);letter-spacing:.03em}
+  .tag.high{color:var(--coral);border-color:rgba(255,122,107,.42)}
+  .tag.low{color:var(--sage);border-color:rgba(127,183,154,.42)}
+  .del{background:transparent;border-color:transparent;color:var(--muted);width:32px;height:32px;font-size:17px;line-height:1}
+  .del:hover{color:var(--coral);background:rgba(255,122,107,.09)}
+  .empty{padding:34px 6px;color:var(--muted);font-size:15px}
+  .empty b{display:block;font-family:var(--serif);font-weight:400;font-size:22px;color:var(--cream);margin-bottom:6px}
+
+  /* ---------- focus panel ---------- */
+  .focus{position:sticky;top:28px;border:1px solid var(--line);border-radius:var(--r);
+    background:linear-gradient(180deg,var(--panel) 0%, #142522 100%);padding:26px 24px 24px}
+  .focus h2{font-family:var(--sans);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:0;font-weight:500}
+  .ringwrap{display:grid;place-items:center;margin:18px 0 6px;position:relative}
+  svg.ring{transform:rotate(-90deg)}
+  .ring .track{fill:none;stroke:rgba(237,231,218,.10);stroke-width:3}
+  .ring .bar{fill:none;stroke:var(--coral);stroke-width:3;stroke-linecap:round;
+    transition:stroke-dashoffset .9s linear, stroke .4s ease}
+  .ring.up .bar{stroke:var(--amber)}
+  .ring.idle .bar{stroke:var(--sage)}
+  .clock{position:absolute;text-align:center}
+  .clock .big{font-family:var(--serif);font-size:50px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .clock .small{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .next{border-top:1px solid var(--line);margin-top:20px;padding-top:18px}
+  .next .label{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .next .title{font-family:var(--serif);font-size:27px;line-height:1.25;margin:8px 0 6px;word-break:break-word}
+  .next .when{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .queue{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+  .queue h3{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:500}
+  .queue ul{list-style:none;margin:0;padding:0}
+  .queue li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:14px;color:var(--cream)}
+  .queue li span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap}
+  .queue li.past{color:var(--muted)}
+  .queue li.past span:last-child{color:var(--coral)}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--cream);color:#12211F;
+    padding:11px 20px;border-radius:var(--r);font-size:14px;font-weight:500;opacity:0;pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;z-index:20}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media (max-width:520px){
+    .brand h1{font-size:32px}
+    .today{text-align:left}
+    .clock .big{font-size:42px}
+    .shell{padding:24px 16px 70px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand">
+      <div>
+        <h1>Светофор <span class="dot"></span></h1>
+        <small>напоминалки на сегодня</small>
+      </div>
+    </div>
+    <div class="today"><span id="dayName">сегодня</span><span id="dayDate" style="font-family:var(--sans);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)"></span></div>
+  </header>
+
+  <div class="cols">
+    <main>
+      <form class="composer" id="form" autocomplete="off">
+        <h2>Новое напоминание</h2>
+        <div class="row">
+          <input type="text" id="text" placeholder="Что нужно не забыть?" aria-label="Текст напоминания" maxlength="140" required>
+          <input type="time" id="time" aria-label="Время" required>
+          <select id="prio" aria-label="Важность">
+            <option value="low">обычное</option>
+            <option value="high">важное</option>
+          </select>
+          <button class="btn-add" type="submit">Добавить</button>
+        </div>
+        <div class="composer-foot">
+          <span class="hint">Нажмите <b>Enter</b>, чтобы сохранить. Повторяющиеся — по кнопке <b>↻</b> у готовой строки.</span>
+        </div>
+      </form>
+
+      <div class="filters" role="group" aria-label="Фильтр">
+        <button class="chip" data-filter="all" aria-pressed="true">Все</button>
+        <button class="chip" data-filter="open" aria-pressed="false">Незакрытые</button>
+        <button class="chip" data-filter="done" aria-pressed="false">Готовые</button>
+        <span class="count" id="count"></span>
+      </div>
+
+      <ul class="list" id="list"></ul>
+    </main>
+
+    <aside class="focus" aria-label="Ближайшее напоминание">
+      <h2>Дальше</h2>
+      <div class="ringwrap">
+        <svg class="ring" id="ring" width="208" height="208" viewBox="0 0 208 208" role="img" aria-label="Обратный отсчёт">
+          <circle class="track" cx="104" cy="104" r="96"/>
+          <circle class="bar" id="bar" cx="104" cy="104" r="96" stroke-dasharray="603.19" stroke-dashoffset="603.19"/>
+        </svg>
+        <div class="clock">
+          <div class="big" id="clock">—</div>
+          <div class="small" id="clockLabel">до следующего</div>
+        </div>
+      </div>
+      <div class="next">
+        <div class="label">Следующее</div>
+        <div class="title" id="nextTitle">Ничего не запланировано</div>
+        <div class="when" id="nextWhen">Добавьте напоминание — и здесь появится таймер</div>
+      </div>
+      <div class="queue">
+        <h3>Дальше по списку</h3>
+        <ul id="queue"></ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  const KEY = "svt.reminders.v1";
+  const $ = (s)=>document.querySelector(s);
+
+  const WEEK = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+  const MONTH = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+
+  function seed(){
+    const now = new Date();
+    const at = (h,m)=>{ const d=new Date(now); d.setHours(h,m,0,0); return hm(d); };
+    return [
+      { id: id(), text:"Позвонить в клинику за результатом анализа", time: at(11,30), prio:"high", done:false, repeat:0 },
+      { id: id(), text:"Забрать посылку в пункте выдачи", time: at(15,0), prio:"low", done:false, repeat:0 },
+      { id: id(), text:"Скинуть черновик презентации Мише", time: at(19,15), prio:"low", done:false, repeat:0 }
+    ];
+  }
+  function id(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+  function hm(d){ return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+  function minutesOf(t){ const p=t.split(":"); return (+p[0])*60 + (+p[1]); }
+
+  let items = load();
+  let filter = "all";
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return seed();
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) && arr.length ? arr : seed();
+    }catch(e){ return seed(); }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(items)); }catch(e){} }
+
+  /* ---------- render list ---------- */
+  const listEl = $("#list");
+  function render(){
+    const sorted = items.slice().sort((a,b)=> minutesOf(a.time)-minutesOf(b.time) || a.done-b.done);
+    const shown = sorted.filter(it =>
+      filter==="all" ? true : filter==="done" ? it.done : !it.done);
+
+    listEl.innerHTML = "";
+    if(!shown.length){
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.innerHTML = items.length
+        ? "<b>Здесь пусто</b>Все напоминания в этом фильтре закрыты."
+        : "<b>Пока ничего</b>Добавьте первое напоминание — и таймер справа запустится.";
+      listEl.appendChild(li);
+    }
+
+    for(const it of shown){
+      const li = document.createElement("li");
+      li.className = "item" + (it.done?" done":"");
+      li.dataset.id = it.id;
+
+      const tick = document.createElement("button");
+      tick.className = "tick";
+      tick.setAttribute("aria-pressed", String(it.done));
+      tick.setAttribute("aria-label", it.done?"Отменить выполнение":"Отметить выполненным");
+      tick.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 6.2 4.4 9 10.5 3" fill="none" stroke="#0F1E1C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      tick.onclick = ()=>{ it.done=!it.done; save(); render(); tickFlash(it.done); };
+
+      const body = document.createElement("div");
+      body.className = "body";
+      const txt = document.createElement("div");
+      txt.className = "txt";
+      txt.textContent = it.text;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const tm = document.createElement("span");
+      tm.className = "time"; tm.textContent = it.time;
+      const tg = document.createElement("span");
+      tg.className = "tag " + it.prio; tg.textContent = it.prio==="high"?"важное":"обычное";
+      meta.append(tm, tg);
+      if(it.repeat>0){
+        const rp = document.createElement("span");
+        rp.textContent = "повтор ×" + it.repeat;
+        meta.appendChild(rp);
+      }
+      body.append(txt, meta);
+
+      const acts = document.createElement("div");
+      acts.style.display="flex"; acts.style.gap="2px";
+      const rep = document.createElement("button");
+      rep.className = "del"; rep.title="Повторить завтра"; rep.textContent="↻";
+      rep.setAttribute("aria-label","Повторить завтра");
+      rep.onclick = ()=>{ it.repeat++; save(); render(); toast("Повтор на завтра добавлен"); };
+      const del = document.createElement("button");
+      del.className = "del"; del.title="Удалить"; del.textContent="×";
+      del.setAttribute("aria-label","Удалить напоминание");
+      del.onclick = ()=>{ items = items.filter(x=>x.id!==it.id); save(); render(); toast("Удалено"); };
+      acts.append(rep, del);
+
+      li.append(tick, body, acts);
+      listEl.appendChild(li);
+    }
+
+    const open = items.filter(i=>!i.done).length;
+    $("#count").textContent = open ? open + " " + plural(open,["открыто","открыты","открыто"]) : "Всё закрыто";
+    document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.filter===filter)));
+    renderPanel();
+  }
+  function plural(n,f){ return n%10===1&&n%100!==11 ? f[0] : (n%10>=2&&n%10<=4&&(n%100<10||n%100>=20) ? f[1] : f[2]); }
+
+  function tickFlash(done){
+    const t = done ? "Готово" : "Снова открыто";
+    toast(t);
+  }
+
+  /* ---------- panel + countdown ---------- */
+  const ring = $("#ring"), bar = $("#bar"), clock = $("#clock"), clockLabel = $("#clockLabel");
+  const CIRC = 2*Math.PI*96;
+
+  function renderPanel(){
+    const now = new Date();
+    const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+    const sorted = items.slice().sort((a,b)=> minutesOf(a.time)-minutesOf(b.time));
+    const next = sorted.find(it=>!it.done && minutesOf(it.time) >= nowMin - 0.5);
+
+    if(!next){
+      ring.className = "ring idle";
+      bar.style.strokeDashoffset = CIRC;
+      clock.textContent = "—";
+      clockLabel.textContent = "нет активных";
+      $("#nextTitle").textContent = "Ничего не запланировано";
+      $("#nextWhen").textContent = "Добавьте напоминание — и здесь появится таймер";
+      renderQueue(sorted, nowMin);
+      return;
+    }
+
+    const left = Math.max(0, minutesOf(next.time) - nowMin);
+    const total = Math.max(1, left);
+    const frac = Math.max(0, Math.min(1, 1 - left/60));
+    ring.className = "ring" + (left <= 10 ? " up" : "");
+    bar.style.strokeDashoffset = CIRC * (1 - frac);
+    clock.textContent = fmt(left);
+    clockLabel.textContent = left < 1 ? "пора" : "до следующего";
+    $("#nextTitle").textContent = next.text;
+    $("#nextWhen").textContent = "в " + next.time + (next.prio==="high" ? " · важное" : "");
+    renderQueue(sorted, nowMin);
+  }
+
+  function fmt(min){
+    const m = Math.floor(min), s = Math.floor((min-m)*60);
+    if(m >= 60){ const h = Math.floor(m/60); return h + "ч " + String(m%60).padStart(2,"0") + "м"; }
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+
+  function renderQueue(sorted, nowMin){
+    const q = $("#queue");
+    q.innerHTML = "";
+    const rest = sorted.filter(it=>!it.done).slice(0,4);
+    if(!rest.length){
+      const li = document.createElement("li");
+      li.innerHTML = "<span>Очередь пуста</span><span></span>";
+      q.appendChild(li);
+      return;
+    }
+    for(const it of rest){
+      const li = document.createElement("li");
+      const m = minutesOf(it.time);
+      if(m < nowMin) li.className = "past";
+      const a = document.createElement("span"); a.textContent = it.text;
+      const b = document.createElement("span"); b.textContent = it.time;
+      li.append(a,b);
+      q.appendChild(li);
+    }
+  }
+
+  /* ---------- toast ---------- */
+  let toastT;
+  function toast(msg){
+    const t = $("#toast");
+    t.textContent = msg; t.classList.add("on");
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>t.classList.remove("on"), 1900);
+  }
+
+  /* ---------- events ---------- */
+  $("#form").addEventListener("submit",(e)=>{
+    e.preventDefault();
+    const text = $("#text").value.trim();
+    const time = $("#time").value;
+    const prio = $("#prio").value;
+    if(!text){ $("#text").focus(); return; }
+    if(!time){ $("#time").focus(); toast("Выберите время"); return; }
+    items.push({id:id(), text:text, time:time, prio:prio, done:false, repeat:0});
+    save(); render();
+    $("#text").value=""; $("#text").focus();
+    toast("Напоминание добавлено");
+  });
+
+  document.querySelectorAll(".chip").forEach(c=>{
+    c.addEventListener("click",()=>{ filter = c.dataset.filter; render(); });
+  });
+
+  function tickAll(){ renderPanel(); }
+  setInterval(tickAll, 1000);
+
+  /* ---------- header date ---------- */
+  const d = new Date();
+  $("#dayName").textContent = WEEK[d.getDay()];
+  $("#dayDate").textContent = d.getDate() + " " + MONTH[d.getMonth()];
+
+  render();
+})();
+</script>
+</body>
+</html>
